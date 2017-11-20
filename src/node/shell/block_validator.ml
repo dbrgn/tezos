@@ -509,6 +509,9 @@ let rec worker_loop bv =
                 may_wakeup err ;
                 return ()
             | Error errors as err ->
+                lwt_log_error "@[<v 2>Received invalid block %a:@ %a@]"
+                  Block_hash.pp_short hash
+                  Error_monad.pp_print_error errors >>= fun () ->
                 Lwt_utils.protect ~canceler:bv.canceler begin fun () ->
                   Distributed_db.commit_invalid_block
                     net_db hash header errors
