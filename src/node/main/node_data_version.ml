@@ -69,8 +69,6 @@ let version_file data_dir =
 
 let check_data_dir_version data_dir =
   let version_file = version_file data_dir in
-  fail_unless (Sys.file_exists version_file)
-    (No_data_dir_version_file version_file) >>=? fun () ->
   Data_encoding_ezjsonm.read_file version_file
   |> trace (Could_not_read_data_dir_version version_file) >>=? fun json ->
   begin
@@ -83,12 +81,12 @@ let check_data_dir_version data_dir =
   return ()
 
 let ensure_data_dir data_dir =
-  if Sys.file_exists data_dir &&
-     (Array.length (Sys.readdir data_dir)) > 0
+  let version_file = version_file data_dir in
+  if Sys.file_exists version_file
   then
     check_data_dir_version data_dir
   else
     Lwt_utils.create_dir ~perm:0o700 data_dir >>= fun () ->
     Data_encoding_ezjsonm.write_file
-      (version_file data_dir)
+      version_file
       (Data_encoding.Json.construct version_encoding data_version)
